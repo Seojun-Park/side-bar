@@ -1,40 +1,101 @@
-import React, { FC, useState } from 'react';
-import { Nav, Page } from './components';
+import React, { FC, ReactNode, useEffect } from 'react';
+import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
+import { DataProps, data } from './data';
 import { useMenuContext } from './contexts';
 
 const App: FC = () => {
-  const { selectedPage, pageContent } = useMenuContext();
-  const [open, setOpen] = useState<boolean>(false);
+  const { pageContent, selectedPage, setSelectedPage, setPageContent } =
+    useMenuContext();
+  const renderChild = (d: DataProps[]): ReactNode => {
+    for (const item of d) {
+      if (item.children && item.children.length > 0) {
+        return (
+          <SubMenu
+            label={item.label}
+            onClick={() => setSelectedPage(item.value)}>
+            {renderChild(item.children)}
+          </SubMenu>
+        );
+      } else {
+        return (
+          <MenuItem onClick={() => setSelectedPage(item.value)}>
+            {item.label}
+          </MenuItem>
+        );
+      }
+    }
+  };
 
-  console.log(pageContent);
+  const findByKey = (data: DataProps[], key: string): any => {
+    for (const item of data) {
+      if (item.value === key) {
+        return item;
+      }
+      if (item.children?.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const innerResult = findByKey(item.children, key);
+        if (innerResult) {
+          return innerResult;
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const currentPageContent: DataProps = findByKey(data, selectedPage);
+    if (currentPageContent?.files) {
+      setPageContent(currentPageContent.files);
+    }
+  }, [data, selectedPage]);
 
   return (
     <div
       style={{
         padding: '30px',
       }}>
-      <button onClick={() => setOpen(!open)}>메뉴열기</button>
       <div
         style={{
+          margin: '100px',
+          border: '1px solid gray',
           display: 'flex',
           flexDirection: 'row',
-          alignItems: 'center',
-          border: '1px solid gray',
-          marginTop: '20px',
         }}>
-        <Nav open={open} />
-        <Page>
-          {pageContent.length === 0 ? (
-            <div>컨텐츠가 없습니다</div>
-          ) : (
-            <div>
-              {pageContent.map((v, i) => {
-                return <div key={i}>{`파일이름:${v.fileName}`}</div>;
-              })}
-            </div>
-          )}
-          <div>test</div>
-        </Page>
+        <Sidebar>
+          <Menu>
+            {data.map((d, i) => {
+              if (d.children && d.children?.length > 0) {
+                return (
+                  <SubMenu
+                    key={i}
+                    label={d.label}
+                    onClick={() => setSelectedPage(d.value)}>
+                    {renderChild(d.children)}
+                  </SubMenu>
+                );
+              } else {
+                return (
+                  <MenuItem
+                    key={i}
+                    onClick={() => setSelectedPage(d.value)}>
+                    {d.label}
+                  </MenuItem>
+                );
+              }
+            })}
+          </Menu>
+        </Sidebar>
+        <div
+          style={{
+            minWidth: '500px',
+            minHeight: '500px',
+            borderLeft: '1px solid gray',
+            padding: '10px',
+          }}>
+          {pageContent?.map((d, i) => {
+            return <div key={i}>{d.fileName}</div>;
+          })}
+        </div>
       </div>
     </div>
   );
