@@ -3,7 +3,7 @@
 ## Getting Start
 
 ### Introduction
-Side-bar project is an demo project which is for Side navigator menu generator
+Side-bar project is a demo project which is for testing Side navigator menu generator
 
 ### Installation
 ```
